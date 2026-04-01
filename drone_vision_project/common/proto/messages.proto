@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+package aerosmith.v1;
+
+enum MessageType {
+  MESSAGE_TYPE_UNSPECIFIED = 0;
+  MESSAGE_TYPE_HEARTBEAT = 1;
+  MESSAGE_TYPE_TELEMETRY = 2;
+  MESSAGE_TYPE_VIDEO_FRAME = 3;
+  MESSAGE_TYPE_INFERENCE_RESULT = 4;
+  MESSAGE_TYPE_CONTROL_COMMAND = 5;
+  MESSAGE_TYPE_LINK_STATUS = 6;
+}
+
+enum LinkType {
+  LINK_TYPE_UNKNOWN = 0;
+  LINK_TYPE_WIFI = 1;
+  LINK_TYPE_LTE = 2;
+}
+
+enum ScanMode {
+  SCAN_MODE_NONE = 0;
+  SCAN_MODE_OBSTACLE = 1;
+  SCAN_MODE_PATH = 2;
+  SCAN_MODE_MANUAL_SCAN = 3;
+}
+
+message Envelope {
+  uint32 schema_version = 1;
+  MessageType msg_type = 2;
+  uint64 seq = 3;
+  uint64 timestamp_ms = 4;
+
+  oneof payload {
+	Heartbeat heartbeat = 10;
+	Telemetry telemetry = 11;
+	VideoFrame video_frame = 12;
+	InferenceResult inference_result = 13;
+	ControlCommand control_command = 14;
+	LinkStatus link_status = 15;
+  }
+}
+
+message Heartbeat {
+  LinkType preferred_link = 1;
+  uint32 uptime_s = 2;
+}
+
+message GpsFix {
+  double latitude_deg = 1;
+  double longitude_deg = 2;
+  float altitude_m = 3;
+  float ground_speed_mps = 4;
+  float heading_deg = 5;
+  uint32 satellites = 6;
+  bool has_fix = 7;
+}
+
+message Telemetry {
+  float battery_voltage = 1;
+  float battery_current_a = 2;
+  uint32 battery_remaining_pct = 3;
+  int32 rssi_dbm = 4;
+  int32 snr_db = 5;
+  uint32 ping_ms = 6;
+  GpsFix gps = 7;
+  ScanMode active_mode = 8;
+}
+
+message VideoFrame {
+  uint64 frame_id = 1;
+  uint32 width = 2;
+  uint32 height = 3;
+  string codec = 4;
+  bytes payload = 5;
+  uint64 capture_timestamp_ms = 6;
+}
+
+message BBox {
+  string label = 1;
+  float confidence = 2;
+  float x = 3;
+  float y = 4;
+  float w = 5;
+  float h = 6;
+}
+
+message InferenceResult {
+  uint64 frame_id = 1;
+  ScanMode mode = 2;
+  uint32 inference_latency_ms = 3;
+  repeated BBox detections = 4;
+  bytes path_mask_png = 5;
+}
+
+message ControlCommand {
+  ScanMode requested_mode = 1;
+  bool trigger_manual_scan = 2;
+  uint64 command_id = 3;
+}
+
+message LinkStatus {
+  LinkType active_link = 1;
+  LinkType preferred_link = 2;
+  uint32 wifi_score = 3;
+  uint32 lte_score = 4;
+  string reason = 5;
+}
+
